@@ -1,7 +1,7 @@
 apply plugin: 'jacoco'
 
 jacoco {
-    toolVersion = "0.8.0" //指定jacoco的版本
+    toolVersion = "0.7.4.201502262128" //指定jacoco的版本
     reportsDir = file("$buildDir/JacocoReport") //指定jacoco生成报告的文件夹
 }
 
@@ -14,24 +14,38 @@ android {
     }
 }
 
-//依赖于testDebugUnitTest任务
-task jacocoTestReport(type: JacocoReport) {
-    group = "reporting" //指定task的分组
-    reports {
-        xml.enabled = true //开启xml报告
-        html.enabled = true //开启html报告
+//首先先删除旧的merge结果文件
+task removeOldMergeEc(type: Delete) {
+    delete "$buildDir/mergedcoverage.ec"
+}
+
+task mergeReport(type: JacocoMerge, dependsOn:removeOldMergeEc){
+    group = "reporting"
+    description = "merge jacoco report."
+    destinationFile= file("$buildDir/mergedcoverage.ec")
+    //这里的ec_dir是存储ec文件的文件夹
+    FileTree tree = fileTree("$buildDir/coverage") {
+        include '**/*.ec'
     }
+    executionData = tree
+}
 
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/classes/debug/com/lya/testjacoco/", //指定类文件夹
-//            includes: ["**/*Presenter.*"], //包含类的规则,这里我们生成所有Presenter类的测试报告
-            excludes: ['**/R.class',
-                       '**/R$*.class',
+task jacocoTestReport(type: JacocoReport, dependsOn:mergeReport) {
+    group = "reporting"
+    description = "generate Jacoco coverage reports after running tests."
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+    classDirectories = fileTree(
+            dir: './build/intermediates/classes/debug',
+            excludes: ['**/R*.class',
                        '**/BuildConfig.*',
-                       '**/Manifest*.*']) //排除类的规则
-
-    def mainSrc = "${project.projectDir}/src/main/java" //指定源码目录
-
-    sourceDirectories = files([mainSrc])
-    classDirectories = files([debugTree])
-    executionData = files("${buildDir}/jacoco/testDebugUnitTest.exec") //指定报告数据的路径
+                       '**/*$InjectAdapter.class',
+                       '**/*$ModuleAdapter.class',
+                       '**/*$ViewInjector*.class',
+                       '**/Manifest*.*'
+            ])
+    sourceDirectories = files("${project.projectDir}/src/main/java")
+    executionData = files("$buildDir/mergedcoverage.ec")
 }
