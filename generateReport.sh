@@ -1,0 +1,2 @@
+java -jar jacococli.jar merge ./testCoverage/execfile/1.0_20180525143902723.ec --destfile ./testCoverage/mergedcoverage.ec
+java -jar jacococli.jar report ./testCoverage/mergedcoverage.ec --classfiles ./testCoverage/classes --html ./testCoverage/jacocoTestReport/html --xml ./testCoverage/jacocoTestReport/jacocoTestReport.xml --sourcefiles ./app/src/main/java
