@@ -5,4 +5,5 @@ package com.lya.testjacoco;
  */
 
 public class ClassB {
+    String name;
 }
