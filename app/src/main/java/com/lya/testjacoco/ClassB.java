@@ -5,6 +5,17 @@ package com.lya.testjacoco;
  */
 
 public class ClassB {
-    String name;
-    long id;
+    int id;
+
+    public String getName() {
+        if (id == 0) {
+            return "default";
+        } else {
+            return this.getClass().getName();
+        }
+    }
+
+    public void add() {
+        id++;
+    }
 }

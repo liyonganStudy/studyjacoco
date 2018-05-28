@@ -1,13 +1,13 @@
 apply plugin: 'jacoco'
 
 ext {
-    MERGED_FILE = "$rootDir/mergedcoverage.ec"
+    MERGED_FILE = "$rootDir/coverage/mergedcoverage.ec"
     COVERAGE_DATA_FILES = "$rootDir/coverage"
 }
 
 jacoco {
     toolVersion = "0.7.4.201502262128" //指定jacoco的版本，该设置没有用
-    reportsDir = file("$rootDir/JacocoReport") //指定jacoco生成报告的文件夹
+    reportsDir = file("$rootDir/coverage/JacocoReport") //指定jacoco生成报告的文件夹
 }
 
 android {
@@ -22,7 +22,7 @@ android {
 task copyCoverageData {
     doFirst {
         println "copy files from /sdcard/coverage to $COVERAGE_DATA_FILES"
-        String command = "adb pull /sdcard/coverage/ ./app"
+        String command = "adb pull /sdcard/coverage/ $COVERAGE_DATA_FILES"
         command.execute()
     }
 }
@@ -44,18 +44,18 @@ task mergeReport(type: JacocoMerge, dependsOn: removeOldMergeEc){
 }
 
 task gitDiffFiles {
-    new ByteArrayOutputStream().withStream { os ->
-        exec {
-            executable = 'git'
-            args = ['log', '-1', '--pretty=format:\"%at\"']
-            standardOutput = os
-        }
-        ext.lastVersion = os.toString()
-        println ext.lastVersion
+    def projectDir = getProject().getProjectDir()
+    String cmd = "git diff --name-only --diff-filter=ACMRTUXB  HEAD~1 HEAD~0 $projectDir"
+    String changeInfo = cmd.execute().text.trim()
+    def changeFileList = new ArrayList<String>();
+    changeInfo.split("\\n").each {
+        changeFileList.add(it)
     }
+    ext.changedFiles = changeFileList
+    println "diff file name: $ext.changedFiles"
 }
 
-task jacocoTestReport(type: JacocoReport, dependsOn:mergeReport) {
+task jacocoTestReport(type: JacocoReport, dependsOn: mergeReport) {
     group = "reporting"
     description = "generate Jacoco coverage reports after running tests."
     reports {
@@ -64,6 +64,7 @@ task jacocoTestReport(type: JacocoReport, dependsOn:mergeReport) {
     }
     classDirectories = fileTree(
             dir: './build/intermediates/classes/debug',
+            includes: gitDiffFiles.changedFiles,
             excludes: ['**/R*.class',
                        '**/BuildConfig.*',
                        '**/*$InjectAdapter.class',

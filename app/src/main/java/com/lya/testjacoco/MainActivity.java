@@ -14,6 +14,10 @@ import java.text.SimpleDateFormat;
 
 public class MainActivity extends AppCompatActivity {
 
+    private ClassA mClassA = new ClassA();
+    private ClassB mClassB = new ClassB();
+    private ClassC mClassC = new ClassC();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,7 +26,24 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.button).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "click", Toast.LENGTH_LONG).show();
+                Toast.makeText(MainActivity.this, mClassA.getName(), Toast.LENGTH_LONG).show();
+                mClassA.add();
+            }
+        });
+
+        findViewById(R.id.button2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, mClassB.getName(), Toast.LENGTH_LONG).show();
+                mClassB.add();
+            }
+        });
+
+        findViewById(R.id.button3).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, mClassC.getName(), Toast.LENGTH_LONG).show();
+                mClassC.add();
             }
         });
     }
