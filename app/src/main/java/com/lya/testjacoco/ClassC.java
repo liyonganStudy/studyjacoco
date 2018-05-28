@@ -5,7 +5,7 @@ package com.lya.testjacoco;
  */
 
 public class ClassC {
-    int id;
+    private int id;
 
     public String getName() {
         if (id == 0) {
