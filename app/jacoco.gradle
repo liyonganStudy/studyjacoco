@@ -3,11 +3,12 @@ apply plugin: 'jacoco'
 ext {
     MERGED_FILE = "$rootDir/coverage/mergedcoverage.ec"
     COVERAGE_DATA_FILES = "$rootDir/coverage"
+    REPORT_FILE = "$rootDir/coverage/JacocoReport"
 }
 
 jacoco {
     toolVersion = "0.7.4.201502262128" //指定jacoco的版本，该设置没有用
-    reportsDir = file("$rootDir/coverage/JacocoReport") //指定jacoco生成报告的文件夹
+    reportsDir = file("$REPORT_FILE") //指定jacoco生成报告的文件夹
 }
 
 android {
@@ -30,6 +31,7 @@ task copyCoverageData {
 //首先先删除旧的merge结果文件
 task removeOldMergeEc(type: Delete, dependsOn: copyCoverageData) {
     delete "$MERGED_FILE"
+    delete "$REPORT_FILE"
 }
 
 task mergeReport(type: JacocoMerge, dependsOn: removeOldMergeEc){
@@ -47,9 +49,13 @@ task gitDiffFiles {
     def projectDir = getProject().getProjectDir()
     String cmd = "git diff --name-only --diff-filter=ACMRTUXB  HEAD~1 HEAD~0 $projectDir"
     String changeInfo = cmd.execute().text.trim()
-    def changeFileList = new ArrayList<String>();
+    def changeFileList = new ArrayList<String>()
     changeInfo.split("\\n").each {
-        changeFileList.add(it)
+        if (it.endsWith(".java")) {
+            def className = it.substring(it.lastIndexOf('/') + 1, it.lastIndexOf(".java"))
+            changeFileList.add("**/$className.*")
+            changeFileList.add("**/$className*.*")
+        }
     }
     ext.changedFiles = changeFileList
     println "diff file name: $ext.changedFiles"
