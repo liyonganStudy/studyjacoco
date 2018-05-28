@@ -1,8 +1,13 @@
 apply plugin: 'jacoco'
 
+ext {
+    MERGED_FILE = "$rootDir/mergedcoverage.ec"
+    COVERAGE_DATA_FILES = "$rootDir/coverage"
+}
+
 jacoco {
-    toolVersion = "0.7.4.201502262128" //指定jacoco的版本
-    reportsDir = file("$buildDir/JacocoReport") //指定jacoco生成报告的文件夹
+    toolVersion = "0.7.4.201502262128" //指定jacoco的版本，该设置没有用
+    reportsDir = file("$rootDir/JacocoReport") //指定jacoco生成报告的文件夹
 }
 
 android {
@@ -14,20 +19,40 @@ android {
     }
 }
 
-//首先先删除旧的merge结果文件
-task removeOldMergeEc(type: Delete) {
-    delete "$buildDir/mergedcoverage.ec"
+task copyCoverageData {
+    doFirst {
+        println "copy files from /sdcard/coverage to $COVERAGE_DATA_FILES"
+        String command = "adb pull /sdcard/coverage/ ./app"
+        command.execute()
+    }
 }
 
-task mergeReport(type: JacocoMerge, dependsOn:removeOldMergeEc){
+//首先先删除旧的merge结果文件
+task removeOldMergeEc(type: Delete, dependsOn: copyCoverageData) {
+    delete "$MERGED_FILE"
+}
+
+task mergeReport(type: JacocoMerge, dependsOn: removeOldMergeEc){
     group = "reporting"
     description = "merge jacoco report."
-    destinationFile= file("$buildDir/mergedcoverage.ec")
+    destinationFile= file("$MERGED_FILE")
     //这里的ec_dir是存储ec文件的文件夹
-    FileTree tree = fileTree("$buildDir/coverage") {
+    FileTree tree = fileTree("$COVERAGE_DATA_FILES") {
         include '**/*.ec'
     }
     executionData = tree
+}
+
+task gitDiffFiles {
+    new ByteArrayOutputStream().withStream { os ->
+        exec {
+            executable = 'git'
+            args = ['log', '-1', '--pretty=format:\"%at\"']
+            standardOutput = os
+        }
+        ext.lastVersion = os.toString()
+        println ext.lastVersion
+    }
 }
 
 task jacocoTestReport(type: JacocoReport, dependsOn:mergeReport) {
@@ -47,5 +72,5 @@ task jacocoTestReport(type: JacocoReport, dependsOn:mergeReport) {
                        '**/Manifest*.*'
             ])
     sourceDirectories = files("${project.projectDir}/src/main/java")
-    executionData = files("$buildDir/mergedcoverage.ec")
+    executionData = files("$MERGED_FILE")
 }
