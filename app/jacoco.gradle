@@ -29,12 +29,12 @@ task copyCoverageData {
 }
 
 //首先先删除旧的merge结果文件
-task removeOldMergeEc(type: Delete, dependsOn: copyCoverageData) {
+task removeOldFiles(type: Delete, dependsOn: copyCoverageData) {
     delete "$MERGED_FILE"
     delete "$REPORT_FILE"
 }
 
-task mergeReport(type: JacocoMerge, dependsOn: removeOldMergeEc){
+task mergeReport(type: JacocoMerge, dependsOn: removeOldFiles){
     group = "reporting"
     description = "merge jacoco report."
     destinationFile= file("$MERGED_FILE")
@@ -47,7 +47,11 @@ task mergeReport(type: JacocoMerge, dependsOn: removeOldMergeEc){
 
 task gitDiffFiles {
     def projectDir = getProject().getProjectDir()
+
+    // 获取相对于上次commit修改了哪些文件
     String cmd = "git diff --name-only --diff-filter=ACMRTUXB  HEAD~1 HEAD~0 $projectDir"
+
+
     String changeInfo = cmd.execute().text.trim()
     def changeFileList = new ArrayList<String>()
     changeInfo.split("\\n").each {
@@ -58,7 +62,6 @@ task gitDiffFiles {
         }
     }
     ext.changedFiles = changeFileList
-    println "diff file name: $ext.changedFiles"
 }
 
 task jacocoTestReport(type: JacocoReport, dependsOn: mergeReport) {
@@ -80,4 +83,8 @@ task jacocoTestReport(type: JacocoReport, dependsOn: mergeReport) {
             ])
     sourceDirectories = files("${project.projectDir}/src/main/java")
     executionData = files("$MERGED_FILE")
+
+    doFirst {
+        println "diff file name: " + gitDiffFiles.changedFiles
+    }
 }
