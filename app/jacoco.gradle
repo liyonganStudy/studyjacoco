@@ -56,6 +56,8 @@ task gitDiffFiles {
     println ext.changedFiles
 }
 
+// ./gradlew jacocotestreport -PbranchBeginGitVersion=b8cf554f648755e328ab7bedc5604fee82c5d7e7 -Dfile.encoding=UTF-8
+
 task jacocoTestReport(type: JacocoReport, dependsOn: mergeReport) {
     group = "reporting"
     description = "generate Jacoco coverage reports after running tests."
