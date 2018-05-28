@@ -11,15 +11,6 @@ jacoco {
     reportsDir = file("$REPORT_FILE") //指定jacoco生成报告的文件夹
 }
 
-android {
-    buildTypes {
-        debug {
-            //打开覆盖率统计开关
-            testCoverageEnabled = true
-        }
-    }
-}
-
 task copyCoverageData {
     doFirst {
         println "copy files from /sdcard/coverage to $COVERAGE_DATA_FILES"
@@ -46,12 +37,12 @@ task mergeReport(type: JacocoMerge, dependsOn: removeOldFiles){
 }
 
 task gitDiffFiles {
-    def projectDir = getProject().getProjectDir()
-
-    // 获取相对于上次commit修改了哪些文件
-    String cmd = "git diff --name-only --diff-filter=ACMRTUXB  HEAD~1 HEAD~0 $projectDir"
-
-
+    // 当前工作站相对于上次commit修改了哪些文件
+    String cmd = "git diff --name-only --diff-filter=ACMRTUXB  HEAD"
+    if (project.hasProperty("branchBeginGitVersion") && !((String) branchBeginGitVersion).isEmpty()) {
+        cmd = "git diff --name-only --diff-filter=ACMRTUXB $branchBeginGitVersion HEAD"
+    }
+    println cmd
     String changeInfo = cmd.execute().text.trim()
     def changeFileList = new ArrayList<String>()
     changeInfo.split("\\n").each {
@@ -62,6 +53,7 @@ task gitDiffFiles {
         }
     }
     ext.changedFiles = changeFileList
+    println ext.changedFiles
 }
 
 task jacocoTestReport(type: JacocoReport, dependsOn: mergeReport) {
@@ -86,5 +78,11 @@ task jacocoTestReport(type: JacocoReport, dependsOn: mergeReport) {
 
     doFirst {
         println "diff file name: " + gitDiffFiles.changedFiles
+    }
+
+    doLast {
+        if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
+            ["/bin/bash", "-c", "open $REPORT_FILE/jacocoTestReport/html/index.html"].execute()
+        }
     }
 }
