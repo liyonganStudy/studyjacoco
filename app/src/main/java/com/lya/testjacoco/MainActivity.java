@@ -54,6 +54,7 @@ public class MainActivity extends AppCompatActivity {
         if (BuildConfig.DEBUG) {
             generateCoverReport();
         }
+
     }
 
     private void generateCoverReport() {

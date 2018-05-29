@@ -5,6 +5,8 @@ ext {
     COVERAGE_DATA_FILES = "$rootDir/coverage"
     REPORT_FILE = "$rootDir/coverage/JacocoReport"
     SOURCE_DIRECTORIES = "src/main/java"
+
+    // -PbranchBeginGitVersion=b8cf554f648755e328ab7bedc5604fee82c5d7e7
 }
 
 jacoco {
@@ -26,10 +28,10 @@ task removeOldFiles(type: Delete, dependsOn: copyCoverageData) {
     delete "$REPORT_FILE"
 }
 
-task mergeReport(type: JacocoMerge, dependsOn: removeOldFiles){
+task mergeReport(type: JacocoMerge, dependsOn: removeOldFiles) {
     group = "reporting"
     description = "merge jacoco report."
-    destinationFile= file("$MERGED_FILE")
+    destinationFile = file("$MERGED_FILE")
     //这里的ec_dir是存储ec文件的文件夹
     FileTree tree = fileTree("$COVERAGE_DATA_FILES") {
         include '**/*.ec'
@@ -108,7 +110,7 @@ task jacocoTestReport(type: JacocoReport, dependsOn: mergeReport) {
             println changedLines
             String subPath = it.substring(it.indexOf("$SOURCE_DIRECTORIES") + 1 + "$SOURCE_DIRECTORIES".length())
             int index = subPath.lastIndexOf('/')
-            def path =  "$REPORT_FILE/jacocoTestReport/html/" +
+            def path = "$REPORT_FILE/jacocoTestReport/html/" +
                     subPath.substring(0, index).replace('/', '.') + File.separator + subPath.substring(index + 1) + ".html"
             def readerString = ""
             def lineNum = 0
